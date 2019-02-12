@@ -21,6 +21,7 @@ LF                      equ 10      ; new line
 ; -----
 ; Error Codes
 ENOENT                  equ -2      ; No such file or directory
+EACCES                  equ -13     ; Permission denied
 
 ; -----
 ; Messages
@@ -31,6 +32,7 @@ usage                   db "readfile quick help.", LF
 notFound                db "File not found.", LF, NULL
 negativeError           db "ERROR: argument cannot be negative", LF, NULL
 InvalidError            db "ERROR: line number is invalid.", LF, NULL
+NoAccessError           db "Permission denied.", LF, NULL
 
 section .bss
 fd                      resq 1      ; file descriptor
@@ -59,6 +61,10 @@ main:
 ; Check if file exists
     cmp rax, ENOENT
     je FileNotFound
+
+; Check file permissions
+    cmp rax, EACCES
+    je NoAccess
 
 ; Save file descriptor
     mov qword [fd], rax
@@ -120,6 +126,15 @@ FileNotFound:
     mov rdi, separator
     call prints
     mov rdi, notFound
+    call prints
+    jmp last
+
+NoAccess:
+    mov rdi, qword [r13+1*8]
+    call prints
+    mov rdi, separator
+    call prints
+    mov rdi, NoAccessError
     call prints
     jmp last
 

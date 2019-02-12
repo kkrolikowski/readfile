@@ -74,6 +74,10 @@ ReadFile:
     cmp rax, EISDIR
     je readEnd
 
+; Other errors
+    cmp rax, 0
+    jb readEnd
+
     mov rax, SYS_write
     mov rdi, STDOUT
     mov rsi, r13

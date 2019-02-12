@@ -35,6 +35,7 @@ negativeError           db "ERROR: argument cannot be negative", LF, NULL
 InvalidError            db "ERROR: line number is invalid.", LF, NULL
 NoAccessError           db "Permission denied.", LF, NULL
 IsDirError              db "Is a directory.", LF, NULL
+OtherError              db "Unknown error.", LF, NULL
 
 section .bss
 fd                      resq 1      ; file descriptor
@@ -68,6 +69,10 @@ main:
     cmp rax, EACCES
     je NoAccess
 
+; Handle other errors
+    cmp rax, 0
+    jb UnknownErr
+    
 ; Save file descriptor
     mov qword [fd], rax
 
@@ -154,6 +159,11 @@ IsDir:
     mov rdi, separator
     call prints
     mov rdi, IsDirError
+    call prints
+    jmp last
+
+UnknownErr:
+    mov rdi, OtherError
     call prints
     jmp last
 

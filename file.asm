@@ -14,6 +14,7 @@ SYS_close               equ 3       ; file close
 O_RDONLY                equ 0       ; readonly access
 STDOUT                  equ 1       ; standard output (screen)
 LF                      equ 10      ; newline character
+EISDIR                  equ -21     ; we can't read directory
 
 section .text
 global openFile
@@ -67,6 +68,10 @@ ReadFile:
     syscall
 
     cmp rax, 0
+    je readEnd
+
+; ISDIR exception
+    cmp rax, EISDIR
     je readEnd
 
     mov rax, SYS_write

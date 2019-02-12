@@ -22,6 +22,7 @@ LF                      equ 10      ; new line
 ; Error Codes
 ENOENT                  equ -2      ; No such file or directory
 EACCES                  equ -13     ; Permission denied
+EISDIR                  equ -21     ; Argument is a directory
 
 ; -----
 ; Messages
@@ -33,6 +34,7 @@ notFound                db "File not found.", LF, NULL
 negativeError           db "ERROR: argument cannot be negative", LF, NULL
 InvalidError            db "ERROR: line number is invalid.", LF, NULL
 NoAccessError           db "Permission denied.", LF, NULL
+IsDirError              db "Is a directory.", LF, NULL
 
 section .bss
 fd                      resq 1      ; file descriptor
@@ -79,6 +81,10 @@ main:
     mov rsi, -1
     call readLines
 
+; ISIR exception
+    cmp rax, EISDIR
+    je IsDir
+
     jmp last
     
 OptionalArg:
@@ -100,6 +106,10 @@ OptionalArg:
     mov rdi, qword [fd]
     mov rsi, rax
     call readLines
+
+; ISIR exception
+    cmp rax, EISDIR
+    je IsDir
 
 ; Close a file
     mov rdi, qword [fd]
@@ -135,6 +145,15 @@ NoAccess:
     mov rdi, separator
     call prints
     mov rdi, NoAccessError
+    call prints
+    jmp last
+
+IsDir:
+    mov rdi, qword [r13+1*8]
+    call prints
+    mov rdi, separator
+    call prints
+    mov rdi, IsDirError
     call prints
     jmp last
 

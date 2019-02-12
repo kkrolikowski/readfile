@@ -81,7 +81,7 @@ main:
     mov rsi, -1
     call readLines
 
-; ISIR exception
+; ISDIR exception
     cmp rax, EISDIR
     je IsDir
 
@@ -107,7 +107,7 @@ OptionalArg:
     mov rsi, rax
     call readLines
 
-; ISIR exception
+; ISDIR exception
     cmp rax, EISDIR
     je IsDir
 

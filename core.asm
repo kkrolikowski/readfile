@@ -26,6 +26,9 @@ prints:
 
     mov rbx, rdi
     mov rdx, 0
+; First we need to count characers we want to print
+; so we will increment tho counter untill NULL character
+; is encountered
 CountLoop:
     cmp byte [rbx], NULL
     je CountDone
@@ -34,9 +37,11 @@ CountLoop:
     jmp CountLoop
 
 CountDone:
-    cmp rdx, 0
-    je printDone
+    cmp rdx, 0                      ; if we have nothing to print
+    je printDone                    ; we can go to the end
 
+; Now we can print whole string. RDX register was set during
+; counting loop
     mov rax, SYS_write
     mov rsi, rdi
     mov rdi, STDOUT
@@ -62,7 +67,10 @@ s2int:
     push r11
     push r12
 
-    mov rbx, rdi
+    mov rbx, rdi                        ; save string address
+
+; We want to eliminate negative numbers and those which
+; starts with 0. 0-numbers are marked as invalid
     cmp byte [rbx], "-"
     je NegativeError
     cmp byte [rbx], "0"
@@ -74,6 +82,10 @@ s2int:
     mov r11, 0                          ; characters from stack
     mov r12, 0                          ; integer to return
 
+; the only purpose of this loop is validate whole string before
+; we will push the values on the stack. It's because stack state
+; will be more predictible. We need to be sure, that we are dealing
+; with 0-9 characters.
 VerifyLoop:
     cmp byte [rbx], NULL
     je PushNum
@@ -86,7 +98,9 @@ VerifyLoop:
     jmp VerifyLoop
 
 PushNum:
-    mov rbx, rdi
+    mov rbx, rdi                        ; once again we have to set string pointer
+
+; Now we can proceed with pushing characters on stack untill NULL is encountered.
 PushNumLoop:
     cmp byte [rbx], NULL
     je MakeNum
@@ -97,6 +111,16 @@ PushNumLoop:
     inc r10
     jmp PushNumLoop
 
+; Conversion algorithm:
+;   1) get character from stack
+;   2) subtract 48 from character value to get integer value
+;   3) multiple by factor.
+;   4) update factor: factor  = factor * 10
+;   5) sum = sum + new_val
+;   5) if number of stack values is greater than those poped from stack
+;       continue with loop, otherwise end loop
+; Example:
+;   123 = 3*1 + 2*10 + 1*100
 MakeNum:
     pop rax
     sub al, 48

@@ -15,7 +15,7 @@ O_RDONLY                equ 0       ; readonly access
 STDOUT                  equ 1       ; standard output (screen)
 LF                      equ 10      ; newline character
 EISDIR                  equ -21     ; we can't read directory
-BUFFSIZE                equ 100
+BUFFSIZE                equ 512
 
 section .text
 
@@ -133,7 +133,7 @@ global readLines2
 readLines2:
     push rbp
     mov rbp, rsp
-    sub rsp, 113
+    sub rsp, 525
     push rbx
     push r12
     push r13
@@ -141,7 +141,7 @@ readLines2:
     push r15
     push rdx
 
-    lea rbx, qword [rbp-113]
+    lea rbx, qword [rbp-525]
 
     mov qword [rbx], rdi                ; 1'st arg: file descriptor
     mov dword [rbx+8], esi              ; 2'nd arg: number of lines

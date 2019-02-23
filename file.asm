@@ -15,6 +15,7 @@ O_RDONLY                equ 0       ; readonly access
 STDOUT                  equ 1       ; standard output (screen)
 LF                      equ 10      ; newline character
 EISDIR                  equ -21     ; we can't read directory
+BUFFSIZE                equ 100
 
 section .text
 
@@ -121,6 +122,83 @@ CountLine:
 
 ; Function end. Restoring stack to previous state
 readEnd:
+    pop r13
+    pop r12
+    pop rbx
+    mov rsp, rbp
+    pop rbp
+    ret
+
+global readLines2
+readLines2:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 113
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
+    push rdx
+
+    lea rbx, qword [rbp-113]
+
+    mov qword [rbx], rdi                ; 1'st arg: file descriptor
+    mov dword [rbx+8], esi              ; 2'nd arg: number of lines
+    lea r13, qword [rbx+12]             ; pointer to single character.
+    lea r14, qword [rbx+13]             ; pointer to local buffer
+
+    mov r12, 0
+    mov rdx, 0
+    mov r15, 0
+readLoop2:
+    cmp dword [rbx+8], -1
+    je bufferLoop
+
+checkLines:
+    cmp dword [rbx+8], r15d
+    je readEnd2
+
+bufferLoop:
+    mov rax, SYS_read
+    mov rdi, qword [rbx]
+    mov rsi, r13
+    mov rdx, 1
+    syscall
+
+    cmp rax, 0
+    je readEnd2
+
+    cmp rax, EISDIR
+    je readEnd2
+    
+; Saving data in the buffer
+    mov r10b, byte [r13]
+    mov byte [r14+r12], r10b
+    inc r12                            ; chars in buffer
+
+    cmp r12, BUFFSIZE
+    je printBuffer
+    cmp r10b, LF
+    je printBuffer
+
+    jmp readLoop2
+
+printBuffer:
+    mov rax, SYS_write
+    mov rdi, STDOUT
+    mov rsi, r14
+    mov rdx, r12
+    syscall
+
+    mov r12, 0
+    inc r15
+    jmp readLoop2
+
+readEnd2:
+    pop rdx
+    pop r15
+    pop r14
     pop r13
     pop r12
     pop rbx

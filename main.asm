@@ -46,6 +46,7 @@ extern openFile                     ; file open
 extern closeFile                    ; file close
 extern s2int                        ; string to integer
 extern readLines                    ; read lines from file
+extern readLines2
 
 section .text
 global main
@@ -84,7 +85,7 @@ main:
 ; -1 is a magick arg, that tells function to read whole file
     mov rdi, qword [fd]
     mov rsi, -1
-    call readLines
+    call readLines2
 
 ; ISDIR exception
     cmp rax, EISDIR
@@ -110,7 +111,7 @@ OptionalArg:
 ; Read lines from file
     mov rdi, qword [fd]
     mov rsi, rax
-    call readLines
+    call readLines2
 
 ; ISDIR exception
     cmp rax, EISDIR

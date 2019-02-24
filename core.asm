@@ -63,11 +63,17 @@ printDone:
 
 global s2int
 s2int:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 8
+
+    push rcx
     push rbx
     push r11
     push r12
 
     mov rbx, rdi                        ; save string address
+    lea rcx, qword [rbp-8]              ; number to return
 
 ; We want to eliminate negative numbers and those which
 ; starts with 0. 0-numbers are marked as invalid
@@ -124,8 +130,11 @@ PushNumLoop:
 MakeNum:
     pop rax
     sub al, 48
-    mul r8
-    add r12b, al
+    mov edx, 0
+    mul r8d
+    mov dword [rcx], eax
+    mov dword [rcx+4], edx
+    add r12, qword [rcx]
     inc r11
 MakeNumLoop:
     cmp r11, r10
@@ -137,8 +146,11 @@ MakeNumLoop:
     pop rax
     inc r11
     sub al, 48
-    mul r8
-    add r12b, al
+    mov edx, 0
+    mul r8d
+    mov dword [rcx], eax
+    mov dword [rcx+4], edx
+    add r12, qword [rcx]
     jmp MakeNumLoop
 
 s2intSuccess:
@@ -154,4 +166,7 @@ s2intEnd:
     pop r12
     pop r11
     pop rbx
+    pop rcx
+    mov rsp, rbp
+    pop rbp
     ret

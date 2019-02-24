@@ -39,7 +39,6 @@ OtherError              db "Unknown error.", LF, NULL
 
 section .bss
 fd                      resq 1      ; file descriptor
-lines                   resd 1      ; how many lines display
 
 extern prints                       ; print string on screen
 extern openFile                     ; file open
@@ -86,11 +85,7 @@ main:
     mov rdi, qword [fd]
     mov rsi, -1
     call readLines2
-
-; ISDIR exception
-    cmp rax, EISDIR
-    je IsDir
-
+    
     jmp last
     
 OptionalArg:

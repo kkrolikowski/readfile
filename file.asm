@@ -133,7 +133,7 @@ global readLines2
 readLines2:
     push rbp
     mov rbp, rsp
-    sub rsp, 525
+    sub rsp, 529
     push rbx
     push r12
     push r13
@@ -141,12 +141,12 @@ readLines2:
     push r15
     push rdx
 
-    lea rbx, qword [rbp-525]
+    lea rbx, qword [rbp-529]
 
     mov qword [rbx], rdi                ; 1'st arg: file descriptor
-    mov dword [rbx+8], esi              ; 2'nd arg: number of lines
-    lea r13, qword [rbx+12]             ; pointer to single character.
-    lea r14, qword [rbx+13]             ; pointer to local buffer
+    mov qword [rbx+8], rsi              ; 2'nd arg: number of lines
+    lea r13, qword [rbx+16]             ; pointer to single character.
+    lea r14, qword [rbx+17]             ; pointer to local buffer
 
     mov r12, 0
     mov rdx, 0
@@ -157,7 +157,7 @@ readLoop2:
 
 checkLines:
     cmp dword [rbx+8], r15d
-    je readEnd2
+    jae readEnd2
 
 bufferLoop:
     mov rax, SYS_read

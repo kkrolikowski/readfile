@@ -59,88 +59,6 @@ global readLines
 readLines:
     push rbp
     mov rbp, rsp
-; We need exactly 13 bytes on the stack to save arguments from call frame
-;   * 8 bytes for file descriptor
-;   * 4 bytes for number of lines to read
-;   * 1 byte  for current character
-    sub rsp, 17
-    push rbx
-    push r12
-    push r13
-
-    lea rbx, dword [rbp-13]
-    mov qword [rbx], rdi            ; file descriptor
-    mov qword [rbx+8], rsi          ; number of lines to read
-    lea r13, byte [rbx+16]          ; single character from file
-
-    mov r12, 0
-readLoop:
-; when -1 is passed as a number of lines to read we will skip the code
-; which checks number of lines. This will cause to read whole file
-    cmp qword [rbx+8], -1
-    je ReadFile
-    
-    cmp r12, qword [rbx+8]         ; check if we've reached lines limit
-    je readEnd
-
-; Read a single characer from file descriptor an save it in local variable
-; on stack
-ReadFile:
-    mov rax, SYS_read
-    mov rdi, qword [rbx]
-    mov rsi, r13
-    mov rdx, 1
-    syscall
-
-; when no characters left, just end the function
-    cmp rax, 0
-    je readEnd
-
-; ISDIR exception
-    cmp rax, EISDIR
-    je readEnd
-
-; Other errors
-    cmp rax, 0
-    jb readEnd
-
-; Print on the screen saved character
-    mov rax, SYS_write
-    mov rdi, STDOUT
-    mov rsi, r13
-    mov rdx, 1
-    syscall
-
-; Count newline
-    cmp byte [r13], LF
-    je CountLine
-    jmp readLoop
-
-CountLine:
-    inc r12
-    jmp readLoop
-
-; Function end. Restoring stack to previous state
-readEnd:
-    pop r13
-    pop r12
-    pop rbx
-    mov rsp, rbp
-    pop rbp
-    ret
-
-; -----
-; readLines2() -- reads number of lines from file
-; HLL call: readLines(fd, n);
-; Arguments:
-;   1) file descriptor (RDI)
-;   2) n-lines (RSI)
-; Returns:
-;   nothing
-global readLines2
-readLines2:
-    push rbp
-    mov rbp, rsp
 ; Stack reservation for arguments and local variables.
 ; We need BUFFSIZE (512 bytes) + 17 bytes
 ; * 8 bytes:   1'st argument - file descriptor
@@ -166,7 +84,7 @@ readLines2:
     mov rdx, 0                          ; number of characters used in syscalls
     mov r15, 0                          ; number of newline characters
 
-readLoop2:
+readLoop:
 ; Algorithm:
 ;   1) check number of newlines
 ;   2) if number is below limit, read single characer from file
@@ -188,7 +106,7 @@ readLoop2:
 
 checkLines:
     cmp r15, qword [rbx+8]              ; end function when we've reached number of
-    jae readEnd2                        ; lines to display
+    jae readEnd                        ; lines to display
 
 ; Read single character from file and save it in local variable
 bufferLoop:
@@ -200,10 +118,10 @@ bufferLoop:
 
 ; check if operation was successful
     cmp rax, EISDIR
-    je readEnd2
+    je readEnd
 
     cmp rax, 0
-    je readEnd2
+    je readEnd
     
 ; Saving data in the buffer
     mov r10b, byte [r13]
@@ -216,7 +134,7 @@ bufferLoop:
     cmp r10b, LF
     je printBuffer
 
-    jmp readLoop2
+    jmp readLoop
 
 ; Display buffer contents on STDOUT (screen)
 printBuffer:
@@ -228,10 +146,10 @@ printBuffer:
 
     mov r12, 0
     inc r15
-    jmp readLoop2
+    jmp readLoop
 
 ; Function end. Reset stack.
-readEnd2:
+readEnd:
     pop rdx
     pop r15
     pop r14

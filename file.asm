@@ -63,24 +63,24 @@ readLines:
 ;   * 8 bytes for file descriptor
 ;   * 4 bytes for number of lines to read
 ;   * 1 byte  for current character
-    sub rsp, 13
+    sub rsp, 17
     push rbx
     push r12
     push r13
 
     lea rbx, dword [rbp-13]
     mov qword [rbx], rdi            ; file descriptor
-    mov dword [rbx+8], esi          ; number of lines to read
-    lea r13, byte [rbx+12]          ; single character from file
+    mov qword [rbx+8], rsi          ; number of lines to read
+    lea r13, byte [rbx+16]          ; single character from file
 
     mov r12, 0
 readLoop:
 ; when -1 is passed as a number of lines to read we will skip the code
 ; which checks number of lines. This will cause to read whole file
-    cmp dword [rbx+8], -1
+    cmp qword [rbx+8], -1
     je ReadFile
     
-    cmp r12d, dword [rbx+8]         ; check if we've reached lines limit
+    cmp r12, qword [rbx+8]         ; check if we've reached lines limit
     je readEnd
 
 ; Read a single characer from file descriptor an save it in local variable
@@ -152,11 +152,11 @@ readLines2:
     mov rdx, 0
     mov r15, 0
 readLoop2:
-    cmp dword [rbx+8], -1
+    cmp qword [rbx+8], -1
     je bufferLoop
 
 checkLines:
-    cmp dword [rbx+8], r15d
+    cmp r15, qword [rbx+8]
     jae readEnd2
 
 bufferLoop:

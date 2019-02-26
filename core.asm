@@ -129,13 +129,18 @@ PushNumLoop:
 ;   123 = 3*1 + 2*10 + 1*100
 MakeNum:
     pop rax
+    inc r11
     sub al, 48
+    
+    cmp al, 0
+    je MakeNumLoop
+
     mov edx, 0
     mul r8d
     mov dword [rcx], eax
     mov dword [rcx+4], edx
     add r12, qword [rcx]
-    inc r11
+
 MakeNumLoop:
     cmp r11, r10
     je s2intSuccess
@@ -146,6 +151,10 @@ MakeNumLoop:
     pop rax
     inc r11
     sub al, 48
+    
+    cmp al, 0
+    je MakeNumLoop
+
     mov edx, 0
     mul r8d
     mov dword [rcx], eax

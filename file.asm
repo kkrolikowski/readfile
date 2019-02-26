@@ -129,10 +129,24 @@ readEnd:
     pop rbp
     ret
 
+; -----
+; readLines2() -- reads number of lines from file
+; HLL call: readLines(fd, n);
+; Arguments:
+;   1) file descriptor (RDI)
+;   2) n-lines (RSI)
+; Returns:
+;   nothing
 global readLines2
 readLines2:
     push rbp
     mov rbp, rsp
+; Stack reservation for arguments and local variables.
+; We need BUFFSIZE (512 bytes) + 17 bytes
+; * 8 bytes:   1'st argument - file descriptor
+; * 8 bytes:   2'nd argument - number of lines to display
+; * 1 byte:    local variable for single character
+; * 512 bytes: local character array for buffer
     sub rsp, BUFFSIZE+17
     push rbx
     push r12
@@ -148,17 +162,35 @@ readLines2:
     lea r13, qword [rbx+16]             ; pointer to single character.
     lea r14, qword [rbx+17]             ; pointer to local buffer
 
-    mov r12, 0
-    mov rdx, 0
-    mov r15, 0
+    mov r12, 0                          ; buffer index
+    mov rdx, 0                          ; number of characters used in syscalls
+    mov r15, 0                          ; number of newline characters
+
 readLoop2:
+; Algorithm:
+;   1) check number of newlines
+;   2) if number is below limit, read single characer from file
+;   3) check if it is not Directory
+;   4) check if operation was successful
+;   5) save character in buffer
+;   6) check if we've reached buffer size
+;       6a) if buffer size is reached, display buffer on the screen
+;       6b) if  current character in buffer is a newline: display buffer
+;           and reset buffer index, increment newline count
+;   7) read next character from file
+; -------------------------------------------------------------------
+
+; Simple trick to skip optional argument with lines to display.
+; When there are no numbers to display callee passing -1 to readLine()
+; as a number of lines to display
     cmp qword [rbx+8], -1
     je bufferLoop
 
 checkLines:
-    cmp r15, qword [rbx+8]
-    jae readEnd2
+    cmp r15, qword [rbx+8]              ; end function when we've reached number of
+    jae readEnd2                        ; lines to display
 
+; Read single character from file and save it in local variable
 bufferLoop:
     mov rax, SYS_read
     mov rdi, qword [rbx]
@@ -166,17 +198,19 @@ bufferLoop:
     mov rdx, 1
     syscall
 
+; check if operation was successful
     cmp rax, EISDIR
     je readEnd2
-    
+
     cmp rax, 0
     je readEnd2
     
 ; Saving data in the buffer
     mov r10b, byte [r13]
-    mov byte [r14+r12], r10b
-    inc r12                            ; chars in buffer
+    mov byte [r14+r12], r10b           ; buffer[i] = char;
+    inc r12                            ; i++;
 
+; When buffer is full or contains a newline, display buffer contents
     cmp r12, BUFFSIZE
     je printBuffer
     cmp r10b, LF
@@ -184,6 +218,7 @@ bufferLoop:
 
     jmp readLoop2
 
+; Display buffer contents on STDOUT (screen)
 printBuffer:
     mov rax, SYS_write
     mov rdi, STDOUT
@@ -195,6 +230,7 @@ printBuffer:
     inc r15
     jmp readLoop2
 
+; Function end. Reset stack.
 readEnd2:
     pop rdx
     pop r15

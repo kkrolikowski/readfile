@@ -86,6 +86,10 @@ main:
     mov rsi, -1
     call readLines2
     
+; ISDIR exception 
+    cmp rax, EISDIR 
+    je IsDir 
+
     jmp last
     
 OptionalArg:

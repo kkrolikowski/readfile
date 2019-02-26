@@ -133,7 +133,7 @@ global readLines2
 readLines2:
     push rbp
     mov rbp, rsp
-    sub rsp, 529
+    sub rsp, BUFFSIZE+17
     push rbx
     push r12
     push r13
@@ -141,7 +141,7 @@ readLines2:
     push r15
     push rdx
 
-    lea rbx, qword [rbp-529]
+    lea rbx, qword [rbp-BUFFSIZE+17]
 
     mov qword [rbx], rdi                ; 1'st arg: file descriptor
     mov qword [rbx+8], rsi              ; 2'nd arg: number of lines
@@ -166,10 +166,10 @@ bufferLoop:
     mov rdx, 1
     syscall
 
-    cmp rax, 0
-    je readEnd2
-
     cmp rax, EISDIR
+    je readEnd2
+    
+    cmp rax, 0
     je readEnd2
     
 ; Saving data in the buffer
